@@ -54,31 +54,45 @@ public class PageFault {
   {
     int count = 0;
     int oldestPage = -1;
-    int oldestTime = 0;
     int firstPage = -1;
-    int map_count = 0;
     boolean mapped = false;
 
-    while ( ! (mapped) || count != virtPageNum ) {
-      Page page = ( Page ) mem.elementAt( count );
+    while (!mapped) {
+      Page page = (Page) mem.elementAt(count);
       if ( page.physical != -1 ) {
         if (firstPage == -1) {
           firstPage = count;
         }
-        if (page.inMemTime > oldestTime) {
-          oldestTime = page.inMemTime;
+        if (page.M == 0 && page.R == 0) {
           oldestPage = count;
           mapped = true;
         }
       }
       count++;
-      if ( count == virtPageNum ) {
+      if (count == virtPageNum) {
         mapped = true;
       }
     }
     if (oldestPage == -1) {
-      oldestPage = firstPage;
+      mapped = false;
+      while (!mapped) {
+        Page page = (Page) mem.elementAt(count);
+        if ( page.physical != -1 ) {
+          if (firstPage == -1) {
+            firstPage = count;
+          }
+          if (page.M == 0 || page.R == 0) {
+            oldestPage = count;
+            mapped = true;
+          }
+        }
+        count++;
+        if (count == virtPageNum) {
+          mapped = true;
+        }
+      }
     }
+
     Page page = ( Page ) mem.elementAt( oldestPage );
     Page nextpage = ( Page ) mem.elementAt( replacePageNum );
     controlPanel.removePhysicalPage( oldestPage );
